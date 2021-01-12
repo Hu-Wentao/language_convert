@@ -1,4 +1,4 @@
-// Copyright 2020-12-28, Hu-Wentao. 
+// Copyright 2020-12-28, Hu-Wentao.
 // Email: hu.wentao@outlook.com
 // All rights reserved.
 
@@ -6,10 +6,10 @@
 class LanguageAdapter {
   final String annotationSymbol;
   final String filePostfix;
-  final String fileStart;
-  final String fileEnd;
+  String fileStart;
+  String fileEnd;
 
-  const LanguageAdapter({
+  LanguageAdapter({
     this.annotationSymbol = '# ',
     this.filePostfix,
     this.fileStart,
@@ -19,20 +19,19 @@ class LanguageAdapter {
 
 // ---
 
-
-const php_adapter = LanguageAdapter(
+final php_adapter = LanguageAdapter(
   annotationSymbol: '// ',
   filePostfix: '.d_g.php',
   fileStart: '<?php',
   fileEnd: '?>',
 );
 
-const dart_adapter = LanguageAdapter(
+final dart_adapter = LanguageAdapter(
   annotationSymbol: '// ',
   filePostfix: '.d_g.dart',
 );
 
-const ddl_adapter = LanguageAdapter(
+final ddl_adapter = LanguageAdapter(
   annotationSymbol: '-- ',
   filePostfix: '.d_g.sql',
 );
