@@ -3,15 +3,13 @@ import 'dart:io';
 import 'package:language_convert/language_adapter.dart';
 import 'package:language_convert/transformer.dart';
 
+// TODO: 添加生成信息类, 包装更多内容, 生成时间, 生成器版本, 生成类型等
 class CodeBuilder {
-  final LanguageAdapter otpLangAdapter; // 输出语言适配
+  LanguageAdapter otpLangAdapter; // 输出语言适配
   final bool insertGenInfo; // 是否插入生成信息
   String operate; // 被操作的数据
 
-  CodeBuilder({
-    this.otpLangAdapter,
-    this.insertGenInfo = true,
-  });
+  CodeBuilder({this.insertGenInfo = true});
 
   CodeBuilder fromStr(String src) {
     operate = src;
@@ -30,6 +28,7 @@ class CodeBuilder {
   // ---
 
   CodeBuilder transform(ILanguageTransformer trans) {
+    otpLangAdapter = trans.adapter;
     operate = trans.run(operate);
     return this;
   }
@@ -41,13 +40,16 @@ class CodeBuilder {
 
   // ---
   void _onOutput() {
+    // 添加生成信息
     var gen = _genInfo();
     print(gen);
-    if (otpLangAdapter.annotationSymbol != null) {
-      operate = '$gen\n$operate';
-    } else {
+    if (otpLangAdapter.annotationSymbol == null) {
       print('未配置adapter的注释符号, 无法写入生成信息');
+      return;
     }
+    // 添加页头,页尾
+    operate =
+        '$gen\n${otpLangAdapter.fileStart ?? ''}\n$operate\n${otpLangAdapter.fileEnd ?? ''}';
   }
 
   CodeBuilder toCmd() {
@@ -62,8 +64,9 @@ class CodeBuilder {
     Encoding encoding = utf8,
   }) {
     _onOutput();
-    print('文件将写入到: $file_path');
-    File(file_path).writeAsStringSync(operate);
+    var _path = '$outputPath$file_path';
+    print('文件将写入到: $_path');
+    File(_path).writeAsStringSync(operate);
     return this;
   }
 
@@ -78,8 +81,8 @@ class CodeBuilder {
 }
 
 void main() {
-  CodeBuilder(otpLangAdapter: php_adapter)
-      .fromFile('wms_ddl.json')
-      .transform(trans_ddl2php_entities)
-      .toFileWithAdapter('wms');
+  CodeBuilder()
+      .fromFile('_input/wms_ddl.json')
+      .transform(TransDdlJs2DartGacRepoImpl(partOf: 'xxx'))
+      .toFileWithAdapter('wms_repo_impl');
 }
