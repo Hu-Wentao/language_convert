@@ -69,6 +69,7 @@ class CodeBuilder {
 
   CodeBuilder toFileWithAdapter(
     String fileName, {
+    String genTag = 'dt-g.',
     String outputPath = '_output/',
     Encoding encoding = utf8,
   }) =>
