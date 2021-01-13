@@ -1,15 +1,20 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:language_convert/language_adapter.dart';
 import 'package:language_convert/transformer.dart';
 
-// TODO: 添加生成信息类, 包装更多内容, 生成时间, 生成器版本, 生成类型等
 class CodeBuilder {
-  LanguageAdapter otpLangAdapter; // 输出语言适配
   final bool insertGenInfo; // 是否插入生成信息
+
+  BaseOutputInfoFormat outputInfoFmt; // 输出信息格式化
+  List<ILanguageTransformer> transHistory = []; // 转换历史
   String operate; // 被操作的数据
 
-  CodeBuilder({this.insertGenInfo = true});
+  CodeBuilder({
+    this.outputInfoFmt,
+    this.insertGenInfo = true,
+  }) {
+    outputInfoFmt ??= BaseOutputInfoFormat();
+  }
 
   CodeBuilder fromStr(String src) {
     operate = src;
@@ -28,28 +33,25 @@ class CodeBuilder {
   // ---
 
   CodeBuilder transform(ILanguageTransformer trans) {
-    otpLangAdapter = trans.adapter;
+    transHistory.add(trans);
     operate = trans.run(operate);
     return this;
-  }
-
-  String _genInfo() {
-    var dt = DateTime.now();
-    return '${otpLangAdapter.annotationSymbol}Code Gen DT: ${dt.year}-${dt.month}-${dt.day}|${dt.hour}:${dt.minute}:${dt.second}';
   }
 
   // ---
   void _onOutput() {
     // 添加生成信息
-    var gen = _genInfo();
+    var gen = outputInfoFmt.getInfo(transHistory) ?? '没有转换, 无法生成转换信息';
     print(gen);
-    if (otpLangAdapter.annotationSymbol == null) {
+
+    var adapter = transHistory.last?.adapter;
+    if (adapter.annotationSymbol == null) {
       print('未配置adapter的注释符号, 无法写入生成信息');
       return;
     }
     // 添加页头,页尾
     operate =
-        '$gen\n${otpLangAdapter.fileStart ?? ''}\n$operate\n${otpLangAdapter.fileEnd ?? ''}';
+        '$gen\n${adapter.fileStart ?? ''}\n$operate\n${adapter.fileEnd ?? ''}';
   }
 
   CodeBuilder toCmd() {
@@ -76,7 +78,7 @@ class CodeBuilder {
     String outputPath = '_output/',
     Encoding encoding = utf8,
   }) =>
-      toFile((fileName + otpLangAdapter.filePostfix),
+      toFile((fileName + transHistory.last.adapter.filePostfix),
           outputPath: outputPath, encoding: encoding);
 }
 

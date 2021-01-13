@@ -7,18 +7,48 @@ import 'package:language_convert/utils.dart' as utils;
 
 import 'language_adapter.dart';
 
+// TODO: 包装更多内容, 生成类型等
+class BaseOutputInfoFormat {
+  String _genTimeLine(LanguageAdapter lastAdapter) {
+    var dt = DateTime.now();
+    return '${lastAdapter.annotationSymbol}Code Gen DT: ${dt.year}-${dt.month}-${dt.day} | ${dt.hour}:${dt.minute}:${dt.second}';
+  }
+
+  String genTransInfo(ILanguageTransformer trans) {
+    var adapter = trans.adapter;
+    return '${adapter.annotationSymbol}生成器: ${trans.runtimeType} || '
+        '${adapter.annotationSymbol}版本: ${trans.transVersion}\n';
+  }
+
+  String _genAllTransInfo(List<ILanguageTransformer> trans) {
+    return trans.map((t) => genTransInfo(t)).join('\n');
+  }
+
+  String getInfo(List<ILanguageTransformer> transHistory) {
+    var lastAdapter = transHistory?.last?.adapter;
+    return lastAdapter == null
+        ? null
+        : [
+            _genTimeLine(lastAdapter),
+            _genAllTransInfo(transHistory),
+          ].join('\n');
+  }
+}
+
 ///
 /// 语言转换类
 abstract class ILanguageTransformer {
+  final String transVersion;
   final LanguageAdapter adapter;
 
-  ILanguageTransformer(this.adapter);
+  ILanguageTransformer(this.adapter, this.transVersion);
 
   String run(String src);
 }
 
 abstract class DdlJsonTransformer extends ILanguageTransformer {
-  DdlJsonTransformer(LanguageAdapter adapter) : super(adapter);
+  DdlJsonTransformer(LanguageAdapter adapter, String transVersion)
+      : super(adapter, transVersion);
 
   String get pageStart => null;
 
@@ -46,10 +76,11 @@ class TransDdlJs2DartGacRepoImpl extends DdlJsonTransformer {
   // part 文件名(不包含.dart后缀)
   final String partOf;
 
-  TransDdlJs2DartGacRepoImpl({this.partOf}) : super(dart_adapter);
+  TransDdlJs2DartGacRepoImpl({this.partOf}) : super(dart_adapter, 'v2');
 
   @override
-  String get pageStart => partOf != null ? 'part of \'${partOf}.dart\';\n\n' : '';
+  String get pageStart =>
+      partOf != null ? 'part of \'${partOf}.dart\';\n\n' : '';
 
   @override
   String convertByDdl(Map<String, dynamic> ddl) {
@@ -134,7 +165,7 @@ class TransDdlJs2DartGacRepoImpl extends DdlJsonTransformer {
 
 /// 数据库DDL -> PHP实体类
 class TransDdlJs2PhpEntity extends DdlJsonTransformer {
-  TransDdlJs2PhpEntity() : super(dart_adapter);
+  TransDdlJs2PhpEntity() : super(php_adapter, 'v1');
 
   @override
   String convertByDdl(Map<String, dynamic> ddl) {
