@@ -40,18 +40,24 @@ class CodeBuilder {
 
   // ---
   void _onOutput() {
-    // 添加生成信息
-    var gen = outputInfoFmt.getInfo(transHistory) ?? '没有转换, 无法生成转换信息';
-    print(gen);
+    // 打印生成信息
+    List<String> gen =
+        outputInfoFmt.getInfoLines(transHistory) ?? '没有转换, 无法生成转换信息';
+    print(gen.join('\n'));
 
+    // 添加生成信息
     var adapter = transHistory.last?.adapter;
-    if (adapter.annotationSymbol == null) {
-      print('未配置adapter的注释符号, 无法写入生成信息');
+    var annotation = adapter?.annotationSymbol;
+    if (annotation == null) {
+      print('未配置adapter的注释符号, 无法向文件写入生成信息');
       return;
     }
+    var addedGen =
+        gen.map((e) => '${annotation}$e').toList(growable: false).join('\n');
+
     // 添加页头,页尾
     operate =
-        '$gen\n${adapter.fileStart ?? ''}\n$operate\n${adapter.fileEnd ?? ''}';
+        '$addedGen\n${adapter.fileStart ?? ''}\n$operate\n${adapter.fileEnd ?? ''}';
   }
 
   CodeBuilder toCmd() {

@@ -11,27 +11,21 @@ import 'language_adapter.dart';
 class BaseOutputInfoFormat {
   String _genTimeLine(LanguageAdapter lastAdapter) {
     var dt = DateTime.now();
-    return '${lastAdapter.annotationSymbol}Code Gen DT: ${dt.year}-${dt.month}-${dt.day} | ${dt.hour}:${dt.minute}:${dt.second}';
+    return 'Code Gen DT: ${dt.year}-${dt.month}-${dt.day} || ${dt.hour}:${dt.minute}:${dt.second}';
   }
 
-  String genTransInfo(ILanguageTransformer trans) {
-    var adapter = trans.adapter;
-    return '${adapter.annotationSymbol}生成器: ${trans.runtimeType} || '
-        '${adapter.annotationSymbol}版本: ${trans.transVersion}\n';
-  }
+  String genTransInfo(ILanguageTransformer trans) =>
+      '生成器: ${trans.runtimeType} || '
+      '版本: ${trans.transVersion}\n';
 
-  String _genAllTransInfo(List<ILanguageTransformer> trans) {
-    return trans.map((t) => genTransInfo(t)).join('\n');
-  }
-
-  String getInfo(List<ILanguageTransformer> transHistory) {
+  List<String> getInfoLines(List<ILanguageTransformer> transHistory) {
     var lastAdapter = transHistory?.last?.adapter;
     return lastAdapter == null
         ? null
         : [
             _genTimeLine(lastAdapter),
-            _genAllTransInfo(transHistory),
-          ].join('\n');
+            ...transHistory.map((t) => genTransInfo(t)),
+          ];
   }
 }
 
